@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - My Host Deluxe</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="/assets/css/all.min.css">
+    <link href="../css/dist/output.css" rel="stylesheet">
+    <script src="/assets/js/chart.umd.min.js"></script>
+
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo-section">
+                <img src="images/logo.png" alt="Logo" class="w-20 h-auto mx-auto" />
+                <h3 class="text-xl font-bold mt-2">My Host Deluxe</h3>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="nav-link active" data-target="dashboard-content"><i class="fas fa-tachometer-alt"></i><span>Panel de control</span></a></li>
+                    <li><a href="#" class="nav-link" data-target="clients-content"><i class="fas fa-users"></i><span>Administración de agentes</span></a></li>
+                    <li><a href="#" class="nav-link" data-target="projects-content"><i class="fas fa-project-diagram"></i><span>Administración de proyectos</span></a></li>
+                    <li><a href="#" class="nav-link" data-target="services-content"><i class="fas fa-cogs"></i><span>Administración de servicio</span></a></li>
+                    <li><a href="#" class="nav-link" data-target="reports-content"><i class="fas fa-chart-line"></i><span>Reportes y análisis</span></a></li>
+                    <li><a href="#" class="nav-link" data-target="users-content"><i class="fas fa-user-shield"></i><span>Administración de usuario</span></a></li>
+                    <li><a href="#" class="nav-link" data-target="config-audit-content"><i class="fas fa-cog"></i><span>Configuración / Auditoría</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <h1 class="header-title" id="mainHeaderTitle">Panel de control</h1>
+                <div class="user-profile">
+                    <div class="user-profile-toggle">
+                        <img src="./images/adm.user.jpeg" alt="User" class="w-10 h-10 rounded-full object-cover" />
+                        <span id="headerUserName">Usuario</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+
+                    <div class="dropdown-menu">
+                        <ul>
+                            <li><span id="dropdownUserName"></span></li>
+                            <li><small><span id="dropdownUserRole"></span></small></li>
+                            <li><button id="logoutButton"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+            <section class="content-section active" id="dashboard-content">
+                <!-- Encabezado mejorado -->
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="section-title mb-0">Resumen General</h2>
+                    <div class="flex gap-2">
+                        <select id="dateRangeFilter" class="input-style">
+                            <option value="today">Hoy</option>
+                            <option value="week">Esta Semana</option>
+                            <option value="month" selected>Este Mes</option>
+                            <option value="quarter">Este Trimestre</option>
+                            <option value="year">Este Año</option>
+                        </select>
+                        <button id="btnRefreshDashboard" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Actualizar</span>
+                        </button>
+                        <button id="btnExportDashboard" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i>
+                            <span>Exportar Excel</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loader Mejorado -->
+                <div id="dashboardLoader" class="dashboard-loader hidden">
+                    <div class="loader-content">
+                        <div class="loader-spinner"></div>
+                        <p>Cargando datos del dashboard...</p>
+                        <div class="loader-progress">
+                            <div class="loader-bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicador de Estado -->
+                <div id="connectionStatus" class="connection-status hidden">
+                    <div class="status-indicator offline"></div>
+                    <span>Modo offline - Mostrando datos cacheados</span>
+                </div>
+
+                <!-- Tarjetas de estadísticas esenciales - Más pequeñas para una sola línea -->
+                <div class="cards-container compact">
+                    <div class="card compact">
+                        <div class="card-value" id="totalProyectos">0</div>
+                        <div class="card-label">Proyectos Totales</div>
+                        <div class="card-trend" id="projectsTrendContainer">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="tendenciaProyectos">0%</span> vs mes anterior
+                        </div>
+                    </div>
+                    <div class="card compact">
+                        <div class="card-value" id="ingresosMes">$0</div>
+                        <div class="card-label">Ingresos del Mes</div>
+                        <div class="card-trend" id="revenueTrendContainer">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            <span id="tendenciaIngresos">0%</span> vs mes anterior
+                        </div>
+                    </div>
+                    <div class="card compact">
+                        <div class="card-value" id="agentesActivos">0</div>
+                        <div class="card-label">Agentes Activos</div>
+                        <div class="card-trend" id="agentsChangeContainer">
+                            <i class="fas fa-user-plus mr-1"></i>
+                            <span id="agentsChange">+0</span> este mes
+                        </div>
+                    </div>
+                    <div class="card compact">
+                        <div class="card-value" id="tareasPendientes">0</div>
+                        <div class="card-label">Proyectos Pendientes</div>
+                        <div class="card-trend" id="pendingTrendContainer">
+                            <i class="fas fa-clock mr-1"></i>
+                            <span id="pendingTrend">0%</span> del total
+                        </div>
+                    </div>
+                    <div class="card compact">
+                        <div class="card-value" id="completadosSemana">0</div>
+                        <div class="card-label">Completados Esta Semana</div>
+                        <div class="card-trend" id="weeklyTrendContainer">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            <span id="weeklyTrend">+0</span> esta semana
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proyectos Recientes - Ocupa todo el ancho -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="section-title">Proyectos Finalizados Recientemente</h2>
+                        <button id="btnRefreshProjects" class="btn btn-outline">
+                            <i class="fas fa-sync-alt"></i>
+                            <span>Actualizar</span>
+                        </button>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <table class="data-table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Servicio</th>
+                                    <th>Agente</th>
+                                    <th>Monto</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="finishedProjectsTableBody">
+                                <tr><td colspan="5" class="text-center py-4 text-gray-500">Cargando datos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Gráficos de Análisis -->
+<div class="flex justify-between items-center mb-4">
+    <h2 class="section-title">Métricas de Desempeño</h2>
+</div>
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3 class="font-semibold mb-3 text-gray-700">Ingresos Mensuales</h3>
+                        <div style="height: 300px;">
+                            <canvas id="chartVentasMes"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="font-semibold mb-3 text-gray-700">Agentes por Sucursal</h3>
+                        <div style="height: 300px;">
+                            <canvas id="chartAgentesSucursal"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="font-semibold mb-3 text-gray-700">Estado Laboral de Agentes</h3>
+                        <div style="height: 300px;">
+                            <canvas id="chartAgentesEstado"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="font-semibold mb-3 text-gray-700">Rendimiento por Servicio</h3>
+                        <div style="height: 300px;">
+                            <canvas id="chartRendimiento"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="clients-content" class="content-section">
+                <div class="mb-4">
+                    <button id="btnMostrarFormularioAgente" class="btn btn-primary"><i class="fas fa-plus"></i> Agregar Agente</button>
+                </div>
+
+                <!-- Formulario de Agentes con estructura unificada -->
+                <div id="formularioAgenteContainer" class="form-container hidden">
+                    <div class="form-header">
+                        <h3 class="form-title">Añadir Nuevo Agente</h3>
+                        <button type="button" id="cerrarFormularioAgente" class="form-close">&times;</button>
+                    </div>
+
+                    <form id="form-agente" class="form-grid">
+                        <!-- Información Personal -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Información Personal</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="nombre" class="required">Nombre</label>
+                                    <input type="text" id="nombre" name="nombre" required class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="apellido" class="required">Apellido</label>
+                                    <input type="text" id="apellido" name="apellido" required class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaNac" class="required">Fecha de nacimiento</label>
+                                    <input type="date" id="fechaNac" name="fechaNac" required class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="genero" class="required">Género</label>
+                                    <select id="genero" name="genero" required class="form-input">
+                                        <option value="" disabled selected>Seleccione</option>
+                                        <option value="M">Masculino</option>
+                                        <option value="F">Femenino</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="numId" class="required">Número de identificación</label>
+                                    <input type="text" id="numId" name="numId" required placeholder="Ej: 001-010101-0001A" class="form-input" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información de Contacto -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Información de Contacto</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="emailPersonal" class="required">Email personal</label>
+                                    <input type="email" id="emailPersonal" name="emailPersonal" required class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="emailInst">Email institucional</label>
+                                    <input type="email" id="emailInst" name="emailInst" class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="tel1" class="required">Teléfono principal</label>
+                                    <input type="tel" id="tel1" name="tel1" required class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="tel2">Teléfono secundario</label>
+                                    <input type="tel" id="tel2" name="tel2" class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="direccion" class="required">Dirección</label>
+                                    <input type="text" id="direccion" name="direccion" required class="form-input" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Datos Laborales -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Datos Laborales</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="sucursal" class="required">Sucursal</label>
+                                    <select id="sucursal" name="sucursal" required class="form-input">
+                                        <option value="" disabled selected>Seleccione</option>
+                                        <option>Managua</option>
+                                        <option>San Benito</option>
+                                        <option>Jinotepe</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cargo" class="required">Cargo</label>
+                                    <select id="cargo" name="cargo" required class="form-input">
+                                        <option value="" disabled selected>Seleccione</option>
+                                        <option>Agente</option>
+                                        <option>Administrador</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaIngreso" class="required">Fecha de ingreso</label>
+                                    <input type="date" id="fechaIngreso" name="fechaIngreso" required class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="tipoContrato" class="required">Tipo de contrato</label>
+                                    <select id="tipoContrato" name="tipoContrato" required class="form-input">
+                                        <option value="" disabled selected>Seleccione</option>
+                                        <option>Tiempo completo</option>
+                                        <option>Medio tiempo</option>
+                                        <option>Teletrabajo</option>
+                                        <option>Contrato temporal</option>
+                                        <option>Contrato de prácticas</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="duracionContrato">Duración del contrato</label>
+                                    <input type="text" id="duracionContrato" name="duracionContrato" placeholder="Ej: 6 meses, 1 año, Indefinido" class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="estadoLaboral" class="required">Estado laboral</label>
+                                    <select id="estadoLaboral" name="estadoLaboral" required class="form-input">
+                                        <option value="activo" selected>Activo</option>
+                                        <option value="inactivo">Inactivo</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Acceso al Sistema -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Acceso al Sistema</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="rol" class="required">Rol</label>
+                                    <select id="rol" name="rol" required class="form-input">
+                                        <option value="" disabled selected>Seleccione</option>
+                                        <option value="agente">Agente</option>
+                                        <option value="administrador">Administrador</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="usuario" class="required">Usuario</label>
+                                    <input type="text" id="usuario" name="usuario" required class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="clave" class="required">Contraseña</label>
+                                    <input type="text" id="clave" name="clave" required class="form-input" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información Adicional -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Información Adicional</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="especialidad">Especialidad</label>
+                                    <input type="text" id="especialidad" name="especialidad" placeholder="Ej: Ventas, Soporte, Diseño" class="form-input" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="notas">Notas internas</label>
+                                    <textarea id="notas" name="notas" rows="3" class="form-input" placeholder="Información adicional..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary">Cancelar</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Agente</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Contenedor unificado para filtros y tabla -->
+                <div id="agentsListContainer" class="hidden-on-add">
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <!-- Sección de filtros -->
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">Filtros de Búsqueda</h3>
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <label for="filtroSucursalAgente" class="text-gray-700 font-medium whitespace-nowrap">Sucursal:</label>
+                                    <select id="filtroSucursalAgente" class="input-style">
+                                        <option value="todos">Todas</option>
+                                        <option>Managua</option>
+                                        <option>San Benito</option>
+                                        <option>Jinotepe</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label for="filtroEstadoAgente" class="text-gray-700 font-medium whitespace-nowrap">Estado:</label>
+                                    <select id="filtroEstadoAgente" class="input-style">
+                                        <option value="todos">Todos</option>
+                                        <option value="activo">Activo</option>
+                                        <option value="inactivo">Inactivo</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label for="buscarAgente" class="text-gray-700 font-medium whitespace-nowrap">Buscar nombre:</label>
+                                    <input type="text" id="buscarAgente" placeholder="Escriba nombre..." class="input-style" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección de tabla -->
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4">Lista de Agentes</h3>
+                            <table class="data-table w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Teléfono</th>
+                                        <th>Sucursal</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="agentsTableBody">
+                                    <tr><td colspan="6" class="text-center py-4 text-gray-500">Cargando agentes...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+<!-- SECTION DE PROYECTO -->
+<section id="projects-content" class="content-section">
+    <div class="mb-4">
+        <button id="btnMostrarFormularioProyecto" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Crear Proyecto
+        </button>
+    </div>
+
+    <!-- Formulario de Proyectos con estructura unificada -->
+    <div id="formularioProyectoContainer" class="form-container hidden">
+        <div class="form-header">
+            <h3 class="form-title" id="form-title">Crear Nuevo Proyecto</h3>
+            <button type="button" onclick="cancelarCreacionProyecto()" class="form-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <p class="text-gray-600 mb-6">Complete el formulario según el servicio que necesita</p>
+        
+        <form id="form-proyecto" class="form-grid" enctype="multipart/form-data">
+            <!-- Sección 1: Categoría y Servicio -->
+            <div class="form-section">
+                <h4 class="form-section-title">Selección de Servicio</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Selector de Categoría -->
+                    <div class="form-group">
+                        <label for="service-category" class="block font-medium text-gray-700 required">Categoría de Servicio</label>
+                        <select id="service-category" name="categoriaId" class="mt-1 block w-full rounded-md border border-gray-300 p-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all duration-200">
+                            <option value="">Seleccione una categoría</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Selector de Servicio (dependiente de categoría) -->
+                    <div class="form-group">
+                        <label for="service-select" class="block font-medium text-gray-700 required">Servicio</label>
+                        <select id="service-select" name="servicioId" class="mt-1 block w-full rounded-md border border-gray-300 p-2 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none transition-all duration-200" disabled>
+                            <option value="">Primero seleccione una categoría</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Botón para agregar servicio -->
+                <div class="mt-4">
+                    <button type="button" id="btn-agregar-servicio" class="btn btn-primary" disabled>
+                        <i class="fas fa-plus mr-2"></i> Agregar Servicio al Proyecto
+                    </button>
+                </div>
+            </div>
+            
+        <!-- Sección 2: Formularios Personalizados de Servicios -->
+<div class="form-section">
+    <h4 class="form-section-title">Configuración de Servicios</h4>
+
+    <!-- Contenedor para formularios personalizados de servicios -->
+<div id="servicios-personalizados-container" class="space-y-6 w-full">
+    <div class="bg-gray-50 border border-gray-300 rounded-lg p-6 text-center w-full">
+        <i class="fas fa-clipboard-list text-gray-400 text-4xl mb-4"></i>
+        <p class="text-gray-600 font-medium mb-2">No hay servicios agregados</p>
+        <p class="text-gray-500 text-sm">Seleccione un servicio y haga clic en "Agregar Servicio al Proyecto"</p>
+    </div>
+</div>
+
+    <!-- Resumen de servicios -->
+    <div id="resumen-servicios" class="mt-6 bg-gray-50 border border-gray-300 rounded-lg p-6 hidden max-w-2xl mx-auto">
+        <h5 class="font-medium text-gray-700 mb-3">Resumen de Servicios</h5>
+
+        <div id="lista-servicios" class="space-y-2">
+            <!-- Se agregan dinámicamente -->
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-gray-300">
+            <div class="flex justify-between items-center">
+                <span class="font-medium text-gray-700">Total:</span>
+                <span id="total-servicios" class="font-bold text-lg text-green-600">$0.00</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+            
+            <!-- Sección 3: Información de Contacto -->
+            <div class="form-section">
+                <h4 class="form-section-title">Información de Contacto</h4>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="company-name" class="required">Nombre de la Empresa</label>
+                        <input type="text" id="company-name" name="nombreEmpresa" required placeholder="Nombre de la Compañía" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="client-name" class="required">Nombre del Cliente (Contacto Principal)</label>
+                        <input type="text" id="client-name" name="nombreContacto" required placeholder="Nombre del Cliente" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="required">Correo de Contacto</label>
+                        <input type="email" id="email" name="correoElectronico" required placeholder="correo@empresa.com" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone" class="required">Teléfono</label>
+                        <input type="tel" id="phone" name="telefono" required placeholder="Números de Contacto" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="website">WEB / Dominio Actual</label>
+                        <input type="url" id="website" name="sitioWeb" placeholder="https://www.dominio.com" class="form-input">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección 4: Gestión y Seguimiento Interno -->
+            <div class="form-section">
+                <h4 class="form-section-title">Gestión y Seguimiento Interno</h4>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="project-name" class="required">Nombre del Proyecto</label>
+                        <input type="text" id="project-name" name="nombreProyecto" required placeholder="Nombre del Proyecto" class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monto" class="required">Monto Total ($)</label>
+                        <input type="text" id="monto" name="montoTotal" required readonly value="$0.00" class="form-input bg-gray-100 font-semibold text-lg">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="status" class="required">Estado del Proyecto</label>
+                        <select id="status" name="estado" required class="form-input">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en-proceso">En Proceso</option>
+                            <option value="completado">Completado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priority" class="required">Prioridad</label>
+                        <select id="priority" name="prioridad" required class="form-input">
+                            <option value="alta">Alta</option>
+                            <option value="media">Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="agent" class="required">Agente Responsable</label>
+                        <select id="agent" name="agenteId" required class="form-input">
+                            <option value="">Cargando agentes...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="start-date" class="required">Fecha de Inicio</label>
+                        <input type="date" id="start-date" name="fechaInicio" required class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="delivery-date" class="required">Fecha de Entrega Estimada</label>
+                        <input type="date" id="delivery-date" name="fechaEntregaEstimada" required class="form-input">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección 5: Descripción Final del Proyecto -->
+            <div class="form-section">
+                <h4 class="form-section-title">Descripción Final del Proyecto</h4>
+                <div class="form-group">
+                    <label for="project-description" class="required">Descripción del Proyecto</label>
+                    <textarea id="project-description" name="descripcion" rows="5" required placeholder="Detallar que tipo de trabajo desea que se le realice y cualquier nota adicional." class="form-input"></textarea>
+                </div>
+            </div>
+            
+            <!-- Campos ocultos -->
+            <input type="hidden" id="logo-base64" name="logoBase64" value="">
+            <input type="hidden" id="colores-data" name="coloresMarca" value="">
+            <input type="hidden" id="servicios-data" name="servicios">
+            
+            <!-- Botón de Guardar -->
+            <div class="form-actions">
+                <button type="button" onclick="cancelarCreacionProyecto()" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save mr-2"></i> <span id="btn-submit-proyecto">Guardar Proyecto</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modal para seleccionar servicios -->
+    <div id="modal-seleccion-servicio" class="modal-overlay hidden">
+        <div class="modal-content max-w-4xl">
+            <div class="modal-header">
+                <h3 class="modal-title">Seleccionar Servicio</h3>
+                <button type="button" onclick="cerrarModalSeleccion()" class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="modal-servicios-lista">
+                    <!-- Los servicios se cargarán aquí -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" onclick="cerrarModalSeleccion()" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Lista de Proyectos con Filtros -->
+    <div id="projectsListContainer" class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Sección de filtros -->
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Filtros de Búsqueda</h3>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <label for="filtroEstadoProyecto" class="text-gray-700 font-medium whitespace-nowrap">Estado:</label>
+                    <select id="filtroEstadoProyecto" class="input-style">
+                        <option value="todos">Todos</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en-proceso">En proceso</option>
+                        <option value="completado">Completado</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="filtroPrioridadProyecto" class="text-gray-700 font-medium whitespace-nowrap">Prioridad:</label>
+                    <select id="filtroPrioridadProyecto" class="input-style">
+                        <option value="todos">Todas</option>
+                        <option value="baja">Baja</option>
+                        <option value="media">Media</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label for="buscarProyecto" class="text-gray-700 font-medium whitespace-nowrap">Buscar:</label>
+                    <input type="text" id="buscarProyecto" placeholder="Nombre, cliente..." class="input-style" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de tabla -->
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Lista de Proyectos</h3>
+            <table class="data-table w-full">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cliente</th>
+                        <th>Responsable</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="projectsTableBody">
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-gray-500">
+                            No hay proyectos registrados.
+                        </td>
+                        
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+            <!-- SECTION DE CATEGORIA -->
+            <section id="services-content" class="content-section">
+                <div class="mb-4">
+                    <button id="btnMostrarFormularioServicio" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Registrar Servicio
+                    </button>
+                </div>
+
+                <!-- Formulario de Servicio con estructura unificada -->
+                <div id="formularioServicioContainer" class="form-container hidden">
+                    <div class="form-header">
+                        <h3 class="form-title">Registrar Nuevo Servicio</h3>
+                        <button type="button" id="cerrarFormularioServicio" class="form-close">&times;</button>
+                    </div>
+                    
+                    <form id="form-servicio" class="form-grid">
+                        <!-- Información Básica del Servicio -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Información Básica del Servicio</h4>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="nombre-servicio" class="required">Nombre del Servicio</label>
+                                    <input type="text" id="nombre-servicio" name="nombreServicio" required
+                                    class="form-input"
+                                    placeholder="Ej: Web Básico Anual">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="categoria" class="required">Categoría</label>
+                                    <select id="categoria" name="categoria" required
+                                    class="form-input">
+                                        <option value="">Seleccione una categoría</option>
+                                        <option value="web">Web</option>
+                                        <option value="diseno-grafico">Diseño Gráfico</option>
+                                        <option value="video">Producción de Video</option>
+                                        <option value="marketing">Marketing</option>
+                                        <option value="redes-sociales">Redes Sociales</option>
+                                        <option value="presencia-digital">Presencia Digital</option>
+                                        <option value="extras">Extras</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Descripción y Detalles -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Descripción y Detalles</h4>
+                            
+                            <!-- Descripción -->
+                            <div class="form-group">
+                                <label for="descripcion" class="required">Descripción del Servicio</label>
+                                <textarea id="descripcion" name="descripcion" required rows="4"
+                                class="form-input"
+                                placeholder="Breve resumen del servicio y lo que incluye..."></textarea>
+                            </div>
+
+                            <!-- Información de Precios -->
+                            <div class="form-grid">
+                                <!-- Precio Base -->
+                                <div class="form-group">
+                                    <label for="precio-base" class="required">Precio Base ($)</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        </div>
+                                        <input type="number" id="precio-base" name="costoBase" required min="0" step="0.01"
+                                        class="form-input pl-8"
+                                        placeholder="0.00">
+                                    </div>
+                                </div>
+
+                                <!-- Unidad de Precio -->
+                                <div class="form-group">
+                                    <label for="unidad-precio" class="required">Unidad de Precio</label>
+                                    <select id="unidad-precio" name="unidadPrecio" required
+                                    class="form-input">
+                                        <option value="">Seleccione unidad</option>
+                                        <option value="anual">Por año</option>
+                                        <option value="mensual">Por mes</option>
+                                        <option value="unidad">Por unidad</option>
+                                        <option value="paquete">Por paquete</option>
+                                        <option value="proyecto">Por proyecto</option>
+                                        <option value="hora">Por hora</option>
+                                    </select>
+                                </div>
+
+                                <!-- Estado -->
+                                <div class="form-group">
+                                    <label>Estado del Servicio</label>
+                                    <div class="flex items-center mt-2">
+                                        <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                                            <input type="checkbox" name="estado" id="estado" checked
+                                                class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-200 ease-in-out" />
+                                            <label for="estado"
+                                                class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-all duration-200 ease-in-out"></label>
+                                        </div>
+                                        <span id="estado-texto" class="text-green-600 font-medium">Activo</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notas Adicionales -->
+                        <div class="form-section">
+                            <h4 class="form-section-title">Información Adicional</h4>
+                            
+                            <div class="form-group">
+                                <label for="notas-adicionales">Notas Adicionales</label>
+                                <textarea id="notas-adicionales" name="notasAdicionales" rows="3"
+                                class="form-input"
+                                placeholder="Observaciones como soporte incluido, extras disponibles, etc. (Opcional)"></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Este campo es opcional</p>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="form-actions">
+                            <button type="button" id="btnLimpiarServicio" class="btn btn-secondary">
+                                <i class="fas fa-redo mr-2"></i> Limpiar Formulario
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save mr-2"></i> Guardar Servicio
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Lista de Servicios -->
+                <div id="servicesListContainer" class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <!-- Sección de filtros -->
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Filtros de Búsqueda</h3>
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <label for="filtroCategoriaServicio" class="text-gray-700 font-medium whitespace-nowrap">Categoría:</label>
+                                <select id="filtroCategoriaServicio" class="input-style">
+                                    <option value="todos">Todas</option>
+                                    <option value="web">Web</option>
+                                    <option value="diseno-grafico">Diseño Gráfico</option>
+                                    <option value="video">Video</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="redes-sociales">Redes Sociales</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label for="filtroEstadoServicio" class="text-gray-700 font-medium whitespace-nowrap">Estado:</label>
+                                <select id="filtroEstadoServicio" class="input-style">
+                                    <option value="todos">Todos</option>
+                                    <option value="activo">Activo</option>
+                                    <option value="inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label for="buscarServicio" class="text-gray-700 font-medium whitespace-nowrap">Buscar:</label>
+                                <input type="text" id="buscarServicio" placeholder="Nombre del servicio..." class="input-style" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de tabla -->
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4">Catálogo de Servicios</h3>
+                        <table class="data-table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Precio Base</th>
+                                    <th>Unidad</th>
+                                    <th>Estado</th>
+                                    <th>Proyectos Activos</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="servicesTableBody">
+                                <tr><td colspan="8" class="text-center py-4 text-gray-500">No hay servicios registrados.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+    <section id="reports-content" class="content-section">
+    <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">Generar Reporte Personalizado</h3>
+        
+        <form id="form-reporte" class="form-grid">
+            
+            <!-- Mes del Reporte -->
+            <div class="form-group">
+                <label>Mes del Reporte</label>
+                <select name="mesReporte" class="form-input" id="selectMes">
+                    <!-- JS llenará automáticamente -->
+                </select>
+            </div>
+
+            <!-- Año -->
+            <div class="form-group">
+                <label>Año</label>
+                <select name="anioReporte" class="form-input" id="selectAnio">
+                    <!-- JS llenará automáticamente -->
+                </select>
+            </div>
+
+            <!-- Filtrar por Agente -->
+            <div class="form-group">
+                <label>Filtrar por Agente</label>
+                <select name="agente" id="selectAgente" class="form-input">
+                    <!-- JS cargará agentes desde BD -->
+                </select>
+            </div>
+
+            <!-- Buscar por nombre -->
+            <div class="form-group">
+                <label>Buscar por nombre</label>
+                <input 
+                    type="text"
+                    id="buscadorAgente"
+                    placeholder="Escriba el nombre del agente..."
+                    class="form-input"
+                >
+            </div>
+
+            <!-- Categoría -->
+            <div class="form-group">
+                <label>Filtrar por Categoría</label>
+                <select name="categoria" id="selectCategoria" class="form-input">
+                    <!-- JS cargará categorías reales -->
+                </select>
+            </div>
+
+            <!-- Tipo de Reporte -->
+            <div class="form-group">
+                <label>Tipo de Reporte</label>
+                <select name="tipoReporte" id="selectTipoReporte" class="form-input">
+                    <option value="general">Reporte General</option>
+                    <option value="agentes">Desempeño de Agentes</option>
+                    <option value="proyectos">Avance de Proyectos</option>
+                    <option value="ingresos">Ingresos por Servicio</option>
+                    <option value="detallado">Reporte Detallado</option>
+                </select>
+            </div>
+
+            <!-- Botones -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fas fa-search mr-2"></i> Generar Reporte
+                </button>
+                <button type="button" id="btnExportarReporte" class="btn btn-primary">
+                    <i class="fas fa-file-export mr-2"></i> Exportar
+                </button>
+            </div>
+        </form>
+    </div>
+
+<!-- Vista Previa -->
+<div id="reportViewContainer" class="bg-white p-6 rounded-lg shadow-lg">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4">Vista Previa del Reporte</h3>
+    
+    <!-- Estado inicial o mensaje de carga -->
+    <div id="reportInitialMessage" class="text-gray-500">
+        Seleccione los filtros y haga clic en "Generar Reporte" para ver los datos.
+    </div>
+    
+    <!-- Contenido del reporte generado -->
+    <div id="reportContent" class="report-content hidden">
+        <!-- El contenido del reporte se insertará aquí por JavaScript -->
+    </div>
+    
+    <!-- Estado de carga -->
+    <div id="reportLoading" class="report-loading hidden">
+        <i class="fas fa-spinner"></i>
+        <p>Generando reporte...</p>
+    </div>
+</div>
+</section>
+
+
+            <!-- En la sección de usuarios, estos son los IDs requeridos -->
+<section id="users-content" class="content-section">
+    <div class="mb-4 flex justify-between items-center">
+        <div class="flex gap-2">
+            <button id="btnSincronizarUsuarios" class="btn btn-secondary">
+                <i class="fas fa-sync-alt"></i> Sincronizar Agentes-Usuarios
+            </button>
+            <button id="btnMostrarFormularioUsuario" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Crear Usuario Manual
+            </button>
+        </div>
+    </div>
+
+    <!-- Formulario de Usuario Manual con estructura unificada -->
+    <div id="formularioUsuarioContainer" class="form-container hidden">
+        <!-- Título dinámico -->
+        <div class="form-header">
+            <h3 class="form-title" id="formularioUsuarioTitle">Crear Usuario Manual</h3>
+            <button type="button" id="cerrarFormularioUsuario" class="form-close">&times;</button>
+        </div>
+
+        <form id="form-usuario" class="form-grid">
+            <!-- Información Personal -->
+            <div class="form-section">
+                <h4 class="form-section-title">Información Personal</h4>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nombreUsuario" class="required">Nombre</label>
+                        <input type="text" id="nombreUsuario" required class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="apellidoUsuario" class="required">Apellido</label>
+                        <input type="text" id="apellidoUsuario" required class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="emailUsuario" class="required">Correo Electrónico</label>
+                        <input type="email" id="emailUsuario" required class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telefonoUsuario">Teléfono</label>
+                        <input type="tel" id="telefonoUsuario" class="form-input">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Credenciales de Acceso -->
+            <div class="form-section">
+                <h4 class="form-section-title">Credenciales de Acceso</h4>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="usernameManual" class="required">Nombre de Usuario</label>
+                        <input type="text" id="usernameManual" required class="form-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rolUsuario" class="required">Rol</label>
+                        <select id="rolUsuario" required class="form-input">
+                            <option value="">Seleccione un rol</option>
+                            <option value="administrador">Administrador</option>
+                            <option value="agente">Agente</option>
+                            <option value="usuario">Usuario</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Sección de contraseñas (condicional) -->
+                    <div id="passwordSection" class="form-group">
+                        <label for="passwordManual" class="required">Contraseña</label>
+                        <div class="input-contrasena">
+                            <input type="password" id="passwordManual" required class="form-input">
+                            <button type="button" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPasswordManual" class="required">Confirmar Contraseña</label>
+                        <div class="input-contrasena">
+                            <input type="password" id="confirmPasswordManual" required class="form-input">
+                            <button type="button" class="toggle-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Estado del Usuario -->
+            <div class="form-section">
+                <h4 class="form-section-title">Estado del Usuario</h4>
+                
+                <div class="flex items-center">
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                        <input type="checkbox" id="estadoUsuario" checked
+                            class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-200 ease-in-out" />
+                        <label for="estadoUsuario"
+                            class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer transition-all duration-200 ease-in-out"></label>
+                    </div>
+                    <span id="estadoUsuario-texto" class="text-green-600 font-medium">Usuario Activo</span>
+                </div>
+            </div>
+            
+            <!-- Botones de Acción -->
+            <div class="form-actions">
+                <button type="button" id="btnLimpiarFormularioUsuario" class="btn btn-secondary">
+                    <i class="fas fa-redo mr-2"></i> Limpiar
+                </button>
+                <button type="submit" id="submitUserBtn" class="btn btn-primary">
+                    <i class="fas fa-save mr-2"></i> Crear Usuario
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Usuarios Simplificada -->
+    <div id="usersListContainer" class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Sección de tabla -->
+        <div class="p-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Lista de Usuarios del Sistema</h3>
+            
+            <!-- Opcional: Barra de búsqueda -->
+            <div class="mb-4">
+                <div class="relative">
+                    <input type="text" id="searchUsers" placeholder="Buscar usuarios..." 
+                        class="form-input pl-10">
+                    <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <table class="data-table w-full">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="6" class="text-center py-4 text-gray-500">Cargando usuarios...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+            <section id="config-audit-content" class="content-section">
+                <!-- Configuración de Perfil MEJORADA -->
+                <div class="form-container">
+                    <h3 class="form-title">Configuración de Perfil</h3>
+                    
+                    <div class="config-perfil-container">
+                        <!-- Foto de Perfil -->
+                        <div class="foto-perfil-section">
+                            <div class="foto-perfil-container">
+                                <img id="profile-preview" src="./images/adm.user.jpeg" alt="Foto de perfil">
+                                <label for="profile-photo">
+                                    <i class="fas fa-camera"></i>
+                                </label>
+                                <input type="file" id="profile-photo" accept="image/*" class="hidden">
+                            </div>
+                            <p>Haz clic en la cámara para cambiar tu foto</p>
+                        </div>
+
+                        <!-- Contenido Principal -->
+                        <div class="config-form-content">
+                            <!-- Información Personal -->
+                            <div class="info-personal-grid">
+                                <div class="form-group">
+                                    <label>Nombre</label>
+                                    <input type="text" id="profile-nombre" name="nombre" value="Admin" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Apellido</label>
+                                    <input type="text" id="profile-apellido" name="apellido" value="Principal" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                <label>Teléfono</label>
+                                <input type="tel" id="profile-telefono" name="telefono" value="" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Correo Electrónico</label>
+                                    <input type="email" id="profile-email" name="email" value="admin@myhostdeluxe.com" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre de Usuario</label>
+                                    <input type="text" id="profile-username" name="username" value="admin" class="form-input">
+                                </div>
+                            </div>
+
+                            <!-- Seguridad - Cambio de Contraseña -->
+                            <div class="seguridad-section">
+                                <h4>Cambiar Contraseña</h4>
+                                <div class="campos-contrasena">
+                                    <div class="campo-contrasena">
+                                        <label>Contraseña actual</label>
+                                        <div class="input-contrasena">
+                                            <input type="password" id="currentPassword" placeholder="Ingresa tu contraseña actual">
+                                            <button type="button" class="toggle-password" data-target="currentPassword">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="campo-contrasena">
+                                        <label>Nueva contraseña</label>
+                                        <div class="input-contrasena">
+                                            <input type="password" id="newPassword" placeholder="Ingresa nueva contraseña">
+                                            <button type="button" class="toggle-password" data-target="newPassword">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="campo-contrasena">
+                                        <label>Confirmar contraseña</label>
+                                        <div class="input-contrasena">
+                                            <input type="password" id="confirmPassword" placeholder="Confirma tu nueva contraseña">
+                                            <button type="button" class="toggle-password" data-target="confirmPassword">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="botones-accion">
+                                    <button type="button" id="btn-cambiar-password" class="boton-cambiar-contrasena">
+                                        <i class="fas fa-key"></i> Cambiar Contraseña
+                                    </button>
+                                    
+                                    <div class="info-guardar">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>Guarda los cambios después de realizar modificaciones</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón Guardar Cambios fuera del contenedor de contraseña -->
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="button" id="btn-guardar-perfil" class="boton-guardar-principal">
+                            <i class="fas fa-save"></i> Guardar Cambios del Perfil
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bitácora de Agentes (AUDITORÍA) -->
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="section-title mb-0">Bitácora de Agentes (Auditoría)</h2>
+                    <div class="flex gap-2">
+                        <button id="btn-limpiar-filtros" class="btn btn-secondary">
+                            <i class="fas fa-filter"></i> Limpiar Filtros
+                        </button>
+                        <button id="btn-exportar-logs" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                        <button id="btn-actualizar-auditoria" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtros de Auditoría de Agentes -->
+                <div class="bg-white p-4 rounded-lg shadow mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="form-group">
+                            <label>Agente</label>
+                            <select id="filtro-agente" class="form-input">
+                                <option value="">Todos los agentes</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Acción</label>
+                            <select id="filtro-accion" class="form-input">
+                                <option value="">Todas las acciones</option>
+                                <option value="login">Login</option>
+                                <option value="logout">Logout</option>
+                                <option value="create">Crear</option>
+                                <option value="update">Actualizar</option>
+                                <option value="delete">Eliminar</option>
+                                <option value="sincronizacion">Sincronización</option>
+                                <option value="estado">Cambio Estado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Módulo</label>
+                            <select id="filtro-modulo" class="form-input">
+                                <option value="">Todos los módulos</option>
+                                <option value="agentes">Agentes</option>
+                                <option value="usuarios">Usuarios</option>
+                                <option value="proyectos">Proyectos</option>
+                                <option value="servicios">Servicios</option>
+                                <option value="sistema">Sistema</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha Desde</label>
+                            <input type="date" id="filtro-fecha-desde" class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Registros de Auditoría de Agentes</h3>
+                    <table class="data-table w-full">
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Agente</th>
+                                <th>Acción</th>
+                                <th>Módulo</th>
+                                <th>Detalles</th>
+                                <th>IP</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <tr><td colspan="7" class="text-center py-4 text-gray-500">Cargando bitácora de agentes...</td></tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Paginación con botones mejorados -->
+                    <div class="flex justify-between items-center mt-4">
+                        <div id="pagination-info" class="text-sm text-gray-600">
+                            Mostrando 0 de 0 registros
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="btn-prev-page" class="pagination-btn" disabled>
+                                <i class="fas fa-chevron-left mr-1"></i> Anterior
+                            </button>
+                            <button id="btn-next-page" class="pagination-btn">
+                                Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+<script>
+    // CARGA CONTROLADA DE SCRIPTS - VERSIÓN CORREGIDA
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('=== INICIANDO CARGA DEL ADMIN DASHBOARD ===');
+        
+        // Verificar autenticación primero
+        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+        const userStr = localStorage.getItem('user') || localStorage.getItem('currentUser');
+        
+        if (!token || !userStr) {
+            window.location.href = '../login/index.html';
+            return;
+        }
+        
+        try {
+            const userData = JSON.parse(userStr);
+            const userRole = userData.role || userData.frontendRole || userData.Role;
+            
+            if (userRole !== 'admin' && userRole !== 'administrador') {
+                if (userRole === 'agent' || userRole === 'agente') {
+                    window.location.href = '../agente/index.html';
+                } else {
+                    window.location.href = '../login/index.html';
+                }
+                return;
+            }
+            
+            console.log('Usuario autorizado como administrador');
+            
+            // CARGAR SCRIPTS EN ORDEN SECUENCIAL - CORREGIDO
+            loadScriptsSequentially();
+            
+        } catch (error) {
+            console.error('Error verificando usuario:', error);
+            window.location.href = '../login/index.html';
+        }
+    });
+
+    function loadScriptsSequentially() {
+        const scripts = [
+            './js/admin.dashboard.js',      
+            './js/admin-app.js',            
+            './js/admin-agents.js',         
+            './js/admin-services.js',       
+            './js/admin-projects.js',       
+            './js/admin.users.js',          
+            './js/admin-reports.js',        
+            './js/admin-config.js'          
+        ];
+        
+        console.log('=== INICIANDO CARGA SECUENCIAL DE SCRIPTS ===');
+        
+        let currentIndex = 0;
+        
+        function loadNextScript() {
+            if (currentIndex >= scripts.length) {
+                // TODOS LOS SCRIPTS CARGADOS
+                console.log('=== TODOS LOS SCRIPTS CARGADOS ===');
+                
+                // Inicializar la aplicación
+                setTimeout(() => {
+                    initializeAdminSystem();
+                }, 500);
+                
+                return;
+            }
+            
+            const scriptUrl = scripts[currentIndex];
+            console.log(`Cargando (${currentIndex + 1}/${scripts.length}): ${scriptUrl}`);
+            
+            const script = document.createElement('script');
+            script.src = scriptUrl;
+            
+            script.onload = function() {
+                console.log(`${scriptUrl} cargado exitosamente`);
+                currentIndex++;
+                loadNextScript();
+            };
+            
+            script.onerror = function(error) {
+                console.error(` Error cargando ${scriptUrl}:`, error);
+                
+                // Intentar con ruta alternativa
+                const altScript = document.createElement('script');
+                altScript.src = scriptUrl.replace('./js/', 'js/');
+                altScript.onload = function() {
+                    console.log(` ${altScript.src} cargado desde ruta alternativa`);
+                    currentIndex++;
+                    loadNextScript();
+                };
+                altScript.onerror = function() {
+                    console.error(` Error crítico: No se pudo cargar ${scriptUrl}`);
+                    // Continuar con el siguiente script
+                    currentIndex++;
+                    setTimeout(loadNextScript, 100);
+                };
+                
+                setTimeout(() => {
+                    document.head.appendChild(altScript);
+                }, 100);
+            };
+            
+            // Esperar un poco entre cargas para evitar conflictos
+            setTimeout(() => {
+                document.head.appendChild(script);
+            }, 50);
+        }
+        
+        // Iniciar la carga
+        loadNextScript();
+    }
+
+    function initializeAdminSystem() {
+        console.log('=== INICIALIZANDO SISTEMA ADMINISTRATIVO ===');
+        
+        // 1. Verificar que AdminDashboard esté disponible
+        if (typeof AdminDashboard === 'undefined') {
+            console.error('ERROR CRÍTICO: AdminDashboard no está definido');
+            console.error('Posibles causas:');
+            console.error('1. El archivo admin.dashboard.js no se cargó');
+            console.error('2. Hubo un error en la carga del script');
+            console.error('3. La clase AdminDashboard no está exportada correctamente');
+            
+            // Intentar recargar el script manualmente
+            const script = document.createElement('script');
+            script.src = './js/admin.dashboard.js';
+            script.onload = function() {
+                console.log('Script recargado manualmente, reintentando inicialización...');
+                setTimeout(initializeAdminSystem, 100);
+            };
+            script.onerror = function() {
+                console.error('No se pudo recargar el script');
+                alert('Error: El módulo Dashboard no se cargó correctamente. Recargue la página.');
+            };
+            document.head.appendChild(script);
+            return;
+        }
+        
+        // 2. Verificar que Chart.js esté disponible
+        if (typeof Chart === 'undefined') {
+            console.error('ERROR CRÍTICO: Chart.js no está cargado');
+            alert('Error: Chart.js no se cargó correctamente. Recargue la página.');
+            return;
+        }
+        
+        console.log(' Chart.js disponible:', typeof Chart);
+        console.log(' AdminDashboard disponible:', typeof AdminDashboard);
+        
+        // 3. Crear instancia global del dashboard (SI NO EXISTE)
+        if (!window.adminDashboard) {
+            console.log('Creando instancia de AdminDashboard...');
+            try {
+                window.adminDashboard = new AdminDashboard();
+                console.log(' Instancia de AdminDashboard creada');
+            } catch (error) {
+                console.error('Error creando AdminDashboard:', error);
+                alert('Error al crear el dashboard. Recargue la página.');
+                return;
+            }
+        }
+        
+        // 4. Verificar que adminDashboard tenga el método init
+        if (!window.adminDashboard || typeof window.adminDashboard.init !== 'function') {
+            console.error('ERROR: adminDashboard no tiene método init()');
+            console.log('window.adminDashboard:', window.adminDashboard);
+            alert('Error: El dashboard no está configurado correctamente. Recargue la página.');
+            return;
+        }
+        
+        // 5. Crear instancia de AdminApp si está disponible
+        if (typeof AdminApp !== 'undefined' && !window.adminApp) {
+            console.log('Creando instancia de AdminApp...');
+            try {
+                window.adminApp = new AdminApp();
+                console.log(' Instancia de AdminApp creada');
+            } catch (error) {
+                console.error('Error creando AdminApp:', error);
+                // Continuar solo con dashboard
+            }
+        }
+        
+        // 6. Inicializar dashboard primero - VERSIÓN CORREGIDA
+        console.log('Inicializando AdminDashboard...');
+        
+        // CORRECCIÓN: Verificar si init() devuelve una Promise
+        const initResult = window.adminDashboard.init();
+        
+        if (initResult && typeof initResult.then === 'function') {
+            // init() devuelve una Promise
+            initResult.then(() => {
+                console.log(' AdminDashboard inicializado correctamente');
+                
+                // 7. Luego inicializar AdminApp si existe
+                if (window.adminApp && typeof window.adminApp.init === 'function') {
+                    console.log('Inicializando AdminApp...');
+                    const appInitResult = window.adminApp.init();
+                    
+                    if (appInitResult && typeof appInitResult.then === 'function') {
+                        appInitResult.then(() => {
+                            console.log(' AdminApp inicializado correctamente');
+                            showWelcomeMessage();
+                        }).catch(appError => {
+                            console.error('Error inicializando AdminApp:', appError);
+                            showWelcomeMessage();
+                        });
+                    } else {
+                        // AdminApp.init() no devuelve Promise
+                        console.log(' AdminApp inicializado (síncrono)');
+                        showWelcomeMessage();
+                    }
+                } else {
+                    showWelcomeMessage();
+                }
+            }).catch(dashboardError => {
+                console.error('Error inicializando AdminDashboard:', dashboardError);
+                // Mostrar mensaje de bienvenida incluso si hay error
+                showWelcomeMessage();
+            });
+        } else {
+            // init() NO devuelve una Promise - es síncrono
+            console.log(' AdminDashboard inicializado (síncrono)');
+            
+            // 7. Luego inicializar AdminApp si existe
+            if (window.adminApp && typeof window.adminApp.init === 'function') {
+                console.log('Inicializando AdminApp...');
+                try {
+                    window.adminApp.init();
+                    console.log(' AdminApp inicializado correctamente');
+                } catch (appError) {
+                    console.error('Error inicializando AdminApp:', appError);
+                }
+            }
+            
+            showWelcomeMessage();
+        }
+    }
+
+    function showWelcomeMessage() {
+        console.log('=== SISTEMA ADMINISTRATIVO LISTO ===');
+        // Mostrar toast de bienvenida
+        setTimeout(() => {
+            if (window.adminApp && typeof window.adminApp.mostrarToast === 'function') {
+                window.adminApp.mostrarToast('Sistema administrativo cargado correctamente', 'success');
+            } else if (window.adminDashboard && typeof window.adminDashboard.mostrarToast === 'function') {
+                window.adminDashboard.mostrarToast('Sistema administrativo cargado correctamente', 'success');
+            } else {
+                // Toast simple si no hay sistema de toast
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #28a745;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 6px;
+                    z-index: 9999;
+                    min-width: 250px;
+                `;
+                toast.textContent = 'Sistema administrativo cargado correctamente';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+        }, 1000);
+    }
+
+    // Función de retry para dashboard
+    function retryDashboardInitialization() {
+        if (window.adminDashboard && !window.adminDashboard.initialized) {
+            console.log('Reintentando inicialización del dashboard...');
+            const initResult = window.adminDashboard.init();
+            if (initResult && typeof initResult.then === 'function') {
+                initResult.catch(error => {
+                    console.error('Error en reintento de dashboard:', error);
+                    setTimeout(retryDashboardInitialization, 2000);
+                });
+            }
+        }
+    }
+
+    // Funciones globales de ayuda
+    window.forceDashboardUpdate = function() {
+        console.log('Forzando actualización del dashboard...');
+        if (window.adminDashboard && typeof window.adminDashboard.loadDashboardData === 'function') {
+            const loadResult = window.adminDashboard.loadDashboardData();
+            if (loadResult && typeof loadResult.then === 'function') {
+                loadResult.then(() => {
+                    console.log('Dashboard actualizado forzadamente');
+                }).catch(err => {
+                    console.error('Error actualizando dashboard:', err);
+                });
+            } else {
+                console.log('Dashboard actualizado forzadamente (síncrono)');
+            }
+        } else {
+            console.error('adminDashboard no disponible');
+        }
+    };
+
+    // Inicializar cuando se hace clic en el panel de control
+    document.addEventListener('DOMContentLoaded', function() {
+        const dashboardLink = document.querySelector('[data-target="dashboard-content"]');
+        if (dashboardLink) {
+            dashboardLink.addEventListener('click', function() {
+                setTimeout(() => {
+                    if (window.adminDashboard && typeof window.adminDashboard.loadDashboardData === 'function') {
+                        console.log('Panel de control activado, actualizando datos...');
+                        const loadResult = window.adminDashboard.loadDashboardData();
+                        if (loadResult && typeof loadResult.then === 'function') {
+                            loadResult.catch(err => {
+                                console.error('Error actualizando al cambiar pestaña:', err);
+                            });
+                        }
+                    }
+                }, 300);
+            });
+        }
+    });
+
+    // Funciones globales para modales (mantener compatibilidad)
+    window.cancelarCreacionProyecto = function() {
+        const formulario = document.getElementById('formularioProyectoContainer');
+        if (formulario) formulario.classList.add('hidden');
+        
+        const lista = document.getElementById('projectsListContainer');
+        if (lista) lista.classList.remove('hidden');
+    };
+
+    window.cerrarModal = function() {
+        const modal = document.getElementById('project-details-modal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    // Función para depuración
+    window.debugAdminSystem = function() {
+        console.log('=== DEBUG ADMIN SYSTEM ===');
+        console.log('AdminDashboard class:', typeof AdminDashboard);
+        console.log('window.adminDashboard:', window.adminDashboard);
+        console.log('AdminApp class:', typeof AdminApp);
+        console.log('window.adminApp:', window.adminApp);
+        console.log('Chart.js:', typeof Chart);
+        
+        if (window.adminDashboard) {
+            console.log('adminDashboard.initialized:', window.adminDashboard.initialized);
+            console.log('adminDashboard.init type:', typeof window.adminDashboard.init);
+        }
+        
+        console.log('=== END DEBUG ===');
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Host Deluxe - Acceso</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<!-- En el head de tu HTML del dashboard -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+    --primary-color: #f97316;
+    --primary-hover: #ea580c;
+    --secondary-color: #fbbf24;
+    --bg-dark: #13233b;
+    --bg-light: #f3f4f6;
+    --text-color-dark: #1f2937;
+    --text-color-light: #ffffff;
+    --border-color: #e5e7eb;
+    --card-bg: #ffffff;
+    --error-color: #ef4444;
+    --error-hover: #dc2626;
+    --success-color: #10b981;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background-color: var(--bg-dark);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:1rem;
+    background-image: radial-gradient(circle at 50% 100%, rgba(255,255,255,0.05), transparent 70%);
+}
+.auth-container {
+    background-color: rgba(0,0,0,0.2);
+    padding: 2.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+    width:100%;
+    max-width:420px;
+    text-align:center;
+    animation: fadeIn 0.7s ease-out;
+}
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
+
+.header { margin-bottom: 2rem; }
+.logo { width:160px; margin:0 auto 1.5rem auto; display:block; }
+.title { font-size:1.8rem; font-weight:700; color:var(--text-color-light); margin-bottom:0.5rem; }
+.subtitle { font-size:0.9rem; color:rgba(255,255,255,0.7); font-weight:300; line-height:1.4; margin-bottom:0; }
+
+form { display:flex; flex-direction:column; gap:1.5rem; }
+
+label { display:block; font-size:0.9rem; font-weight:500; color:var(--text-color-light); margin-bottom:0.5rem; }
+label i { margin-right:0.5rem; color: var(--primary-color); width:16px; }
+
+input {
+    width:100%;
+    padding:0.85rem 1rem;
+    background-color:var(--card-bg);
+    color:var(--text-color-dark);
+    border:1px solid var(--border-color);
+    border-radius:0.5rem;
+    font-size:1rem;
+    transition:all 0.2s;
+}
+input:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
+
+.password-container { position:relative; width:100%; }
+.password-container input { padding-right:45px; }
+.toggle-password {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    font-size:1.1rem; cursor:pointer; background:none; border:none; color:#6b7280; padding:0.5rem;
+}
+.toggle-password:hover { color: var(--primary-color); }
+
+#submitBtn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color:white; font-weight:600; padding:1rem 1.5rem;
+    border:none; border-radius:0.5rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:0.75rem; font-size:1rem; min-height:54px;
+    transition:all 0.3s;
+}
+#submitBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow:0 8px 20px rgba(249,115,22,0.4); }
+#submitBtn:disabled { opacity:0.7; cursor:not-allowed; transform:none; }
+
+.hidden { display:none !important; }
+.error-message { background:#fee2e2; border:1px solid #fecaca; color:#dc2626; padding:0.75rem 1rem; border-radius:0.5rem; font-weight:500; text-align:center; font-size:0.9rem; }
+.success-message { background:#d1fae5; border:1px solid #a7f3d0; color:#065f46; padding:0.75rem 1rem; border-radius:0.5rem; font-weight:500; text-align:center; font-size:0.9rem; }
+
+.fa-spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+
+@media(max-width:480px){
+    .auth-container { padding:2rem 1.5rem; }
+    .logo { width:140px; }
+    .title { font-size:1.6rem; }
+}
+</style>
+</head>
+
+<body>
+<div class="auth-container">
+    <div class="header">
+        <img src="/login/images/logo.png" alt="Logo My Host Deluxe" class="logo">
+        <h1 class="title">My Host Deluxe</h1>
+        <p class="subtitle">Sistema de Gestión de Marketing Digital y Diseño Web</p>
+    </div>
+
+    <form id="loginForm">
+        <div class="input-group">
+            <label for="email"><i class="fa-solid fa-envelope"></i> Correo electrónico</label>
+            <input type="email" id="email" name="email" placeholder="tu@email.com" required />
+        </div>
+
+        <div class="input-group">
+            <label for="password"><i class="fa-solid fa-lock"></i> Contraseña</label>
+            <div class="password-container">
+                <input type="password" id="password" name="password" placeholder="••••••••" required />
+                <button type="button" class="toggle-password" id="togglePassword"><i class="fa-solid fa-eye"></i></button>
+            </div>
+        </div>
+
+        <div id="message" class="hidden"></div>
+
+        <button type="submit" id="submitBtn"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const messageDiv = document.getElementById('message');
+    const submitBtn = document.getElementById('submitBtn');
+    const togglePassword = document.getElementById('togglePassword');
+
+    // Limpiar sesión anterior
+    if (window.authService) {
+        window.authService.clearSession();
+    } else {
+        // Limpiar manualmente si authService no está disponible
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('token');
+    }
+    
+    console.log('Página de login cargada - Listo para autenticación');
+
+    togglePassword.addEventListener('click', function() {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-eye', !isPassword);
+        icon.classList.toggle('fa-eye-slash', isPassword);
+    });
+
+    loginForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    if (!emailInput.value || !passwordInput.value) {
+        showMessage('Por favor completa todos los campos', 'error');
+        return;
+    }
+
+    if (!isValidEmail(emailInput.value)) {
+        showMessage('Por favor ingresa un correo electrónico válido', 'error');
+        return;
+    }
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando sesión...';
+
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: emailInput.value, 
+                password: passwordInput.value 
+            })
+        });
+
+        const result = await response.json();
+        console.log('Login response completo:', result);
+
+        // VERIFICACIÓN CORREGIDA - Acceder correctamente a los datos
+        if (result.success && result.data && result.data.user) {
+            const userData = result.data.user;
+            const token = result.data.token;
+            
+            console.log(' Datos recibidos correctamente');
+            console.log(' Usuario:', userData);
+            console.log(' Token:', token);
+            
+            // USAR NOMBRES CONSISTENTES
+            if (window.authService) {
+                window.authService.setSession(userData, token);
+            } else {
+                // Fallback si authService no está disponible
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+                localStorage.setItem('authToken', token);
+                localStorage.setItem('token', token);
+            }
+            
+            console.log(' Sesión guardada correctamente');
+            
+            showMessage('¡Login exitoso! Redirigiendo...', 'success');
+            
+            // Redirigir según el rol - CORREGIDO
+            setTimeout(() => {
+                console.log(' Redirigiendo a panel según rol:', userData.role);
+                
+                // Usar tanto 'role' como 'frontendRole' para compatibilidad
+                const userRole = userData.frontendRole || userData.role;
+                console.log(' Rol detectado para redirección:', userRole);
+                
+                if (userRole === 'admin' || userRole === 'administrador') {
+                    window.location.href = '../admin/index.html';
+                } else if (userRole === 'agent' || userRole === 'agente') {
+                    window.location.href = '../agente/index.html';
+                } else {
+                    console.warn(' Rol no reconocido:', userRole);
+                    window.location.href = '../login/index.html';
+                }
+            }, 1000);
+        } else {
+            // Manejar errores específicos
+            const errorMessage = result.message || 'Error en el login';
+            console.error(' Error en login:', errorMessage);
+            throw new Error(errorMessage);
+        }
+
+    } catch (error) {
+        console.error('Error en login:', error);
+        showMessage(error.message || 'Error al iniciar sesión', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
+    }
+});
+
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function showMessage(message, type) {
+    messageDiv.textContent = message;
+    messageDiv.className = type + '-message';
+    messageDiv.classList.remove('hidden');
+    
+    console.log(` Mensaje [${type}]:`, message);
+    
+    if (type === 'success') {
+        setTimeout(() => {
+            messageDiv.classList.add('hidden');
+        }, 3000);
+    }
+}
+
+    emailInput.addEventListener('input', () => messageDiv.classList.add('hidden'));
+    passwordInput.addEventListener('input', () => messageDiv.classList.add('hidden'));
+});
+</script>
+</body>
+</html>

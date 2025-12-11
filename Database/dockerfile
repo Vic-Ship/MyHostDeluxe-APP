@@ -1,0 +1,23 @@
+# Dockerfile para SQL Server MyHostDeluxe
+FROM mcr.microsoft.com/mssql/server:2019-latest
+
+# Variables de entorno
+ENV ACCEPT_EULA=Y
+ENV SA_PASSWORD=Victoria505
+ENV MSSQL_PID=Express
+
+# Crear directorio para scripts
+RUN mkdir -p /usr/scripts
+
+# Copiar scripts
+COPY ./Database/init-scripts/ /usr/scripts/
+COPY ./init-db.sh /usr/scripts/
+
+# Dar permisos de ejecución
+RUN chmod +x /usr/scripts/init-db.sh
+
+# Puerto expuesto
+EXPOSE 1433
+
+# Comando de inicio
+CMD ["/bin/bash", "/usr/scripts/init-db.sh"]
