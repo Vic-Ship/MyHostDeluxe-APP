@@ -1,0 +1,12 @@
+USE myhostdeluxe;
+GO
+
+CREATE TABLE Roles (
+    RolID INT IDENTITY(1,1) PRIMARY KEY,
+    NombreRol NVARCHAR(50) NOT NULL UNIQUE,
+    Descripcion NVARCHAR(255),
+    Permisos NVARCHAR(MAX),
+    CreadoEn DATETIME2 DEFAULT SYSDATETIME(),
+    ActualizadoEn DATETIME2 DEFAULT SYSDATETIME()
+);
+GO

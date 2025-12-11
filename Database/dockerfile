@@ -1,23 +1,39 @@
-# Dockerfile para SQL Server MyHostDeluxe
-FROM mcr.microsoft.com/mssql/server:2019-latest
+# Dockerfile para SQL Server
+FROM mcr.microsoft.com/mssql/server:2022-latest
 
 # Variables de entorno
 ENV ACCEPT_EULA=Y
-ENV SA_PASSWORD=Victoria505
+ENV SA_PASSWORD=YourStrong!Passw0rd
 ENV MSSQL_PID=Express
 
-# Crear directorio para scripts
+# Crear directorio para scripts de inicialización
 RUN mkdir -p /usr/scripts
+WORKDIR /usr/scripts
 
-# Copiar scripts
-COPY ./Database/init-scripts/ /usr/scripts/
-COPY ./init-db.sh /usr/scripts/
+# Copiar scripts de inicialización
+COPY ./init-scripts/ /usr/scripts/
 
-# Dar permisos de ejecución
-RUN chmod +x /usr/scripts/init-db.sh
-
-# Puerto expuesto
-EXPOSE 1433
-
-# Comando de inicio
-CMD ["/bin/bash", "/usr/scripts/init-db.sh"]
+# Ejecutar scripts en orden al iniciar
+CMD /bin/bash -c "
+    # Iniciar SQL Server en segundo plano
+    /opt/mssql/bin/sqlservr &
+    
+    # Esperar a que SQL Server esté listo
+    sleep 30
+    
+    # Ejecutar scripts en orden
+    echo '=== EJECUTANDO SCRIPTS DE INICIALIZACIÓN ==='
+    for f in /usr/scripts/*.sql; do
+        echo \"Ejecutando: \$f\"
+        /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P \"YourStrong!Passw0rd\" -i \"\$f\" -e
+        if [ \$? -ne 0 ]; then
+            echo \"Error ejecutando \$f\"
+            exit 1
+        fi
+    done
+    
+    echo '=== BASE DE DATOS INICIALIZADA ==='
+    
+    # Mantener el contenedor activo
+    tail -f /dev/null
+"
